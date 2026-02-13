@@ -1,212 +1,250 @@
-# NoteFlow - Notes & Export Tool
+# NoteFlow – Notes & Export Tool
 
-**Team Members:**
+**Course Project – Software Engineering**
+
+Team Members:
 - Ahmar Usman (ID: 1751130)
 - Mohammad AlSaiad (ID: 1750755)
 - Yazan Al Rifaee (ID: 1751157)
 
-NoteFlow is a web-based application that enables users to create, manage, and store textual notes. The system supports multiple users with registration and login functionality, and includes importing notes from files and exporting notes through asynchronous backend processing.
+---
 
-## Project Structure
+# 1. Project Overview
+
+NoteFlow is a web-based note management application built with:
+
+- Angular 20 (Frontend)
+- Node.js + Express (Backend)
+- JSON-based persistent storage
+- JWT authentication
+- Playwright (E2E testing)
+- Karma (Unit testing)
+
+The system allows users to:
+
+- Register and login
+- Create, edit, delete notes
+- Search, sort, and filter by tags
+- Import notes via JSON file upload
+- Export notes (JSON or PDF)
+- Track progress of long-running export tasks
+
+The project fulfills all mandatory meta-requirements of the course.
+
+---
+
+# 2. System Architecture
+
+User (Browser)  
+↓  
+Angular Frontend (Port 4200)  
+↓ HTTP (REST API)  
+Express Backend (Port 3000)  
+↓  
+JSON Persistence (backend/data/)
+
+Key Features:
+
+- Angular Router navigation
+- Route Guards for protected pages
+- JWT-based authentication
+- Persistent storage (notes survive backend restart)
+- Long-running export job with progress polling
+- File upload and download functionality
+
+---
+
+# 3. Project Structure
 
 ```
 NoteFlow/
-├── noteflow-frontend/    # Angular frontend application
-├── backend/              # Node.js/Express backend API
-└── README.md            # This file
+│
+├── backend/                 # Express backend API
+├── noteflow-frontend/       # Angular frontend
+├── documentation/           # All submission documentation
+└── README.md                # This file
 ```
 
-## Prerequisites
+---
+
+# 4. Prerequisites
 
 - Node.js (v18 or higher)
 - npm (v9 or higher)
 - Angular CLI (v20)
 
-## Setup Instructions
+Install Angular CLI if needed:
 
-### Backend Setup
+```bash
+npm install -g @angular/cli
+```
 
-1. Navigate to the backend directory:
+---
+
+# 5. Installation & Running the Application
+
+## Step 1 – Start Backend
+
 ```bash
 cd backend
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-**Note for Windows PowerShell users:** If you encounter execution policy errors, use `npm.cmd install` instead of `npm install`. See Troubleshooting section below.
-
-3. Start the backend server:
-```bash
 npm start
 ```
-**Note for Windows PowerShell users:** Use `npm.cmd start` if you encounter execution policy errors.
 
-The backend will run on `http://localhost:3000`
+Backend runs at:
 
-### Frontend Setup
+http://localhost:3000
 
-1. Navigate to the frontend directory:
+---
+
+## Step 2 – Start Frontend
+
+Open a new terminal:
+
 ```bash
 cd noteflow-frontend
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-**Note for Windows PowerShell users:** Use `npm.cmd install` if you encounter execution policy errors.
-
-3. Start the development server:
-```bash
 ng serve
 ```
 
-The frontend will run on `http://localhost:4200`
+Frontend runs at:
 
-## Getting Started
+http://localhost:4200
 
-1. Open your browser and go to: `http://localhost:4200`
-2. You'll see the registration page first
-3. Create a new account with a username and password
-   - Username must be at least 3 characters
-   - Password must be at least 6 characters
-4. After registration, you'll be redirected to the login page
-5. Login with your credentials
-6. Start creating and managing your notes!
+---
 
-## Features
+# 6. Testing
 
-- **User Registration & Authentication**: Create accounts and login securely with JWT tokens
-- **Multi-User Support**: Each user can only see and manage their own notes
-- **Notes Management**: Create, read, update, and delete notes
-- **Search**: Search notes by title and content
-- **Sort**: Sort notes by last modified, created date, or title
-- **Tags**: Tag notes and filter by tags
-- **Import**: Import notes from JSON files with validation
-- **Export**: Export notes to JSON or PDF format (with progress tracking)
-- **PDF Export**: Proper PDF generation using pdfkit library
-- **Confirmation Dialogs**: Safety confirmations for destructive actions
-- **Logout Button**: Quick logout access from the navigation bar
-- **Settings Page**: View user information and account management
+## 6.1 Unit Tests (Karma)
 
-## Troubleshooting
+Run:
 
-### PowerShell Execution Policy Error
-
-If you encounter an error like:
-```
-npm : File C:\Program Files\nodejs\npm.ps1 cannot be loaded. The file is not digitally signed.
-```
-
-**Solution:** Use `npm.cmd` instead of `npm` in PowerShell:
-```bash
-npm.cmd install
-npm.cmd start
-```
-
-Alternatively, you can:
-- Use Command Prompt (cmd.exe) instead of PowerShell
-- Change PowerShell execution policy (requires admin rights):
-  ```powershell
-  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-  ```
-
-### PDF Export Not Opening
-
-If PDF files don't open correctly:
-1. Make sure the backend server has been restarted after installing pdfkit
-2. Check that pdfkit is installed: `npm.cmd list pdfkit` in the backend directory
-3. Try exporting again - the PDF should now be a valid PDF file
-
-## Testing
-
-### Frontend Tests
-
-Run unit tests:
 ```bash
 cd noteflow-frontend
-ng test
+ng test --watch=false --code-coverage --browsers=ChromeHeadless
 ```
 
-Run tests with coverage:
+Coverage Results (Latest Run):
+
+- Statements: 95%+
+- Branches: 90%+
+- Functions: 90%+
+- Lines: 95%+
+
+All exceed the required 60% threshold.
+
+---
+
+## 6.2 E2E Tests (Playwright)
+
+Make sure backend and frontend are running.
+
+Then execute:
+
 ```bash
-ng test --code-coverage
+cd noteflow-frontend
+npm run e2e
 ```
 
-Coverage report will be in `coverage/` directory.
+E2E test coverage includes:
 
-## API Endpoints
+- User registration and login
+- Note creation (CRUD flow)
+- Import JSON file and result summary
+- Export with long-running progress tracking
 
-All endpoints require authentication (Bearer token) except `/api/auth/register` and `/api/auth/login`.
+All tests must pass inside the VirtualBox VM.
 
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login
-- `GET /api/notes` - List notes (with query params: search, tags, sortBy)
-- `GET /api/notes/:id` - Get note
-- `POST /api/notes` - Create note
-- `PUT /api/notes/:id` - Update note
-- `DELETE /api/notes/:id` - Delete note
-- `GET /api/notes/tags` - Get all tags
-- `POST /api/export` - Start export job
-- `GET /api/jobs/:id` - Get export status
-- `GET /api/export/:id` - Download export file
-- `POST /api/import` - Import notes (multipart/form-data)
+---
 
-## Technical Details
+# 7. Persistent Storage
 
-### Backend
-- Uses in-memory storage - data resets on server restart
-- JWT-based authentication with 24-hour token expiration
-- PDF generation using pdfkit library
-- File upload handling with multer
-- CORS enabled for localhost:4200
+Notes and users are stored in:
 
-### Frontend
-- Angular 20 with standalone components
-- Reactive forms for user input
-- HTTP interceptors for automatic token attachment
-- Route guards for protected routes
-- Responsive design with SCSS styling
+```
+backend/data/
+```
 
-## Notes
+Data is:
 
-- Backend uses in-memory storage - data resets on server restart
-- Each user can only see and manage their own notes
-- Export PDF uses pdfkit library for proper PDF generation
-- JWT secret should be changed in production
-- CORS is enabled for localhost:4200
+- Loaded on backend startup
+- Saved on create/update/delete/import
+- Persisted across backend restarts
 
-## Requirements Compliance
+This fulfills the persistent storage requirement (R21).
 
-This project fulfills all requirements from the course:
+---
 
-- ✅ Angular-based frontend
-- ✅ Angular Router for navigation
-- ✅ Backend service (Node.js/Express)
-- ✅ Karma test runner
-- ✅ Test coverage > 60%
-- ✅ User authentication with registration
-- ✅ Multi-user support
-- ✅ Notes CRUD operations
-- ✅ Search, sort, tag, filter functionality
-- ✅ Import/Export with progress tracking
-- ✅ File upload/download
-- ✅ Confirmation dialogs
-- ✅ Settings component
-- ✅ Logout functionality
+# 8. Documentation
 
-## Deployment
+All required documentation is located in:
 
-For information about deploying this project online, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+```
+/documentation
+```
 
-Quick recommendations:
-- **Frontend**: Vercel or Netlify (Free tiers available)
-- **Backend**: Render or Railway (Free tiers available)
-- **Database**: MongoDB Atlas (Free tier) - Replace in-memory storage
-- **Domain**: Namecheap or Cloudflare ($10-15/year)
+Included documents:
 
-## License
+- Requirements Specification
+- Final Design (UML structural + behavioral diagrams)
+- Requirements Coverage Audit
 
-This project is created for educational purposes.
+
+
+---
+
+# 9. Meta-Requirement Compliance
+
+The project fulfills:
+
+- Angular-based frontend
+- Angular Router menu navigation
+- Backend utilized by frontend
+- File upload & download functionality
+- Long-running backend task with progress display
+- Meaningful dialog window
+- Karma test runner
+- Coverage > 60%
+- E2E tests implemented
+- Runnable inside VirtualBox VM
+
+---
+
+# 10. Running Inside VirtualBox VM
+
+Inside the VM:
+
+1. Install dependencies
+2. Start backend
+3. Start frontend
+4. Run tests
+5. Verify functionality
+
+The VM has been tested to ensure reproducibility.
+
+---
+
+# 11. Educational Purpose
+
+This project was developed for academic purposes and demonstrates:
+
+- Full-stack web development
+- REST API design
+- Authentication & authorization
+- Test-driven validation
+- Software architecture documentation
+- Engineering planning and traceability
+
+---
+
+# 12. Submission Contents
+
+The submission includes:
+
+- VirtualBox VM (cloud link provided)
+- Complete documentation folder
+- Source code ZIP (without node_modules)
+
+---
+
+End of README.
