@@ -1,0 +1,75 @@
+<div class="import-export-container">
+  <h1>Import & Export</h1>
+
+  <div class="sections">
+    <div class="section export-section">
+      <h2>Export Notes</h2>
+      
+      <div class="format-selection">
+        <label>Export Format:</label>
+        <select [value]="exportFormat" (change)="exportFormat = $any($event.target).value">
+          <option value="json">JSON</option>
+          <option value="pdf">PDF</option>
+        </select>
+      </div>
+
+      <button 
+        (click)="startExport()" 
+        [disabled]="isExporting"
+        class="export-button">
+        {{ isExporting ? 'Exporting...' : 'Start Export' }}
+      </button>
+
+      <div *ngIf="isExporting || exportJob" class="progress-section">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="exportProgress"></div>
+        </div>
+        <p class="progress-text">{{ exportProgress }}%</p>
+        <p *ngIf="exportJob" class="status-text">
+          Status: {{ exportJob.status }}
+        </p>
+      </div>
+
+      <div *ngIf="exportJob && exportJob.status === 'completed'" class="success-message">
+        Export completed! File download should start automatically.
+      </div>
+    </div>
+
+    <div class="section import-section">
+      <h2>Import Notes</h2>
+      
+      <div class="file-input">
+        <input 
+          type="file" 
+          accept=".json"
+          (change)="onFileSelected($event)">
+      </div>
+
+      <button 
+        (click)="startImport()" 
+        [disabled]="!importFile || isImporting"
+        class="import-button">
+        {{ isImporting ? 'Importing...' : 'Start Import' }}
+      </button>
+
+      <div *ngIf="isImporting" class="progress-section">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="importProgress"></div>
+        </div>
+        <p class="progress-text">{{ importProgress }}%</p>
+      </div>
+
+      <div *ngIf="importResult" class="import-result">
+        <h3>Import Result</h3>
+        <p>Created: {{ importResult.created }}</p>
+        <p>Rejected: {{ importResult.rejected }}</p>
+        <div *ngIf="importResult.errors && importResult.errors.length > 0" class="errors">
+          <h4>Errors:</h4>
+          <ul>
+            <li *ngFor="let error of importResult.errors">{{ error }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,58 @@
+<div class="notes-list-container">
+  <div class="header">
+    <h1>My Notes</h1>
+    <button (click)="createNote()" class="create-button">Create Note</button>
+  </div>
+
+  <div class="filters">
+    <div class="search-box">
+      <input 
+        type="text" 
+        placeholder="Search notes..." 
+        [value]="searchTerm"
+        (input)="onSearchChange($any($event.target).value)">
+    </div>
+
+    <div class="sort-box">
+      <label>Sort by:</label>
+      <select [value]="sortBy" (change)="onSortChange($any($event.target).value)">
+        <option value="lastModified">Last Modified</option>
+        <option value="created">Created Date</option>
+        <option value="title">Title</option>
+      </select>
+    </div>
+
+    <div class="tags-filter" *ngIf="allTags.length > 0">
+      <label>Filter by tags:</label>
+      <div class="tag-list">
+        <span 
+          *ngFor="let tag of allTags" 
+          class="tag"
+          [class.active]="selectedTags.includes(tag)"
+          (click)="onTagToggle(tag)">
+          {{ tag }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes-grid">
+    <div 
+      *ngFor="let note of filteredNotes" 
+      class="note-card"
+      (click)="editNote(note.id!)">
+      <h3>{{ note.title }}</h3>
+      <p class="preview">{{ getPreview(note.body) }}</p>
+      <div class="note-footer">
+        <div class="tags">
+          <span *ngFor="let tag of note.tags" class="tag-badge">{{ tag }}</span>
+        </div>
+        <div class="date">{{ formatDate(note.lastModified) }}</div>
+      </div>
+    </div>
+
+    <div *ngIf="filteredNotes.length === 0" class="empty-state">
+      <p>No notes found. Create your first note!</p>
+    </div>
+  </div>
+</div>
