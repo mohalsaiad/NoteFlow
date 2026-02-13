@@ -18,20 +18,71 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Storage for data (in production, use a database)
+// Storage for data
+// Persisted: users, notes
+// In-memory: exportJobs (short-lived)
 let users = [];
 let notes = [];
 let exportJobs = {};
 
-// Initialize default user
+// ---- Persistence (JSON file storage) ----
+const DATA_DIR = path.join(__dirname, 'data');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const NOTES_FILE = path.join(DATA_DIR, 'notes.json');
+
+async function ensureDataFiles() {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  try { await fs.access(USERS_FILE); } catch { await fs.writeFile(USERS_FILE, '[]', 'utf8'); }
+  try { await fs.access(NOTES_FILE); } catch { await fs.writeFile(NOTES_FILE, '[]', 'utf8'); }
+}
+
+async function atomicWriteJson(filePath, data) {
+  const tmpPath = `${filePath}.tmp`;
+  await fs.writeFile(tmpPath, JSON.stringify(data, null, 2), 'utf8');
+  await fs.rename(tmpPath, filePath);
+}
+
+async function loadData() {
+  await ensureDataFiles();
+  const [usersRaw, notesRaw] = await Promise.all([
+    fs.readFile(USERS_FILE, 'utf8'),
+    fs.readFile(NOTES_FILE, 'utf8')
+  ]);
+
+  try { users = JSON.parse(usersRaw); } catch { users = []; }
+  try { notes = JSON.parse(notesRaw); } catch { notes = []; }
+
+  if (!Array.isArray(users)) users = [];
+  if (!Array.isArray(notes)) notes = [];
+}
+
+async function saveUsers() {
+  await atomicWriteJson(USERS_FILE, users);
+}
+
+async function saveNotes() {
+  await atomicWriteJson(NOTES_FILE, notes);
+}
+
+// Initialize persisted data and ensure default admin user exists
 (async () => {
-  const hashedPassword = await bcrypt.hash('password', 10);
-  users.push({
-    id: '1',
-    username: 'admin',
-    password: hashedPassword
-  });
-})();
+  await loadData();
+
+  const hasAdmin = users.some(u => u.username === 'admin');
+  if (!hasAdmin) {
+    const hashedPassword = await bcrypt.hash('password', 10);
+    users.push({
+      id: '1',
+      username: 'admin',
+      password: hashedPassword
+    });
+    await saveUsers();
+  }
+
+  console.log('Data loaded:', { users: users.length, notes: notes.length });
+})().catch(err => {
+  console.error('Failed to initialize data:', err);
+});
 
 // Multer configuration for file uploads
 const upload = multer({ dest: 'uploads/' });
@@ -52,7 +103,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Auth Routes
+// -------------------- Auth Routes --------------------
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
 
@@ -60,17 +111,19 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ message: 'Username and password are required' });
   }
 
+  if (username.length < 3) {
+    return res.status(400).json({ message: 'Username must be at least 3 characters' });
+  }
+
   if (password.length < 6) {
     return res.status(400).json({ message: 'Password must be at least 6 characters' });
   }
 
-  // Check if user already exists
   const existingUser = users.find(u => u.username === username);
   if (existingUser) {
     return res.status(400).json({ message: 'Username already exists' });
   }
 
-  // Create new user
   const hashedPassword = await bcrypt.hash(password, 10);
   const newUser = {
     id: uuidv4(),
@@ -79,6 +132,7 @@ app.post('/api/auth/register', async (req, res) => {
   };
 
   users.push(newUser);
+  await saveUsers();
 
   res.status(201).json({ message: 'User registered successfully' });
 });
@@ -97,9 +151,9 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   const token = jwt.sign(
-    { id: user.id, username: user.username },
-    JWT_SECRET,
-    { expiresIn: '24h' }
+      { id: user.id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: '24h' }
   );
 
   res.json({
@@ -111,24 +165,24 @@ app.post('/api/auth/login', async (req, res) => {
   });
 });
 
-// Notes Routes
+// -------------------- Notes Routes --------------------
 app.get('/api/notes', authenticateToken, (req, res) => {
   let userNotes = notes.filter(n => n.userId === req.user.id);
 
   // Search
   if (req.query.search) {
-    const search = req.query.search.toLowerCase();
+    const search = String(req.query.search).toLowerCase();
     userNotes = userNotes.filter(n =>
-      n.title.toLowerCase().includes(search) ||
-      n.body.toLowerCase().includes(search)
+        (n.title || '').toLowerCase().includes(search) ||
+        (n.body || '').toLowerCase().includes(search)
     );
   }
 
   // Filter by tags
   if (req.query.tags) {
-    const filterTags = req.query.tags.split(',');
+    const filterTags = String(req.query.tags).split(',').map(t => t.trim()).filter(Boolean);
     userNotes = userNotes.filter(n =>
-      filterTags.some(tag => n.tags.includes(tag))
+        filterTags.some(tag => (n.tags || []).includes(tag))
     );
   }
 
@@ -136,7 +190,7 @@ app.get('/api/notes', authenticateToken, (req, res) => {
   if (req.query.sortBy === 'created') {
     userNotes.sort((a, b) => new Date(b.created) - new Date(a.created));
   } else if (req.query.sortBy === 'title') {
-    userNotes.sort((a, b) => a.title.localeCompare(b.title));
+    userNotes.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
   } else {
     // Default: lastModified
     userNotes.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
@@ -149,7 +203,7 @@ app.get('/api/notes/tags', authenticateToken, (req, res) => {
   const userNotes = notes.filter(n => n.userId === req.user.id);
   const allTags = new Set();
   userNotes.forEach(note => {
-    note.tags.forEach(tag => allTags.add(tag));
+    (note.tags || []).forEach(tag => allTags.add(tag));
   });
   res.json(Array.from(allTags));
 });
@@ -166,23 +220,29 @@ app.post('/api/notes', authenticateToken, (req, res) => {
   const { title, body, tags } = req.body;
   const now = new Date();
 
+  if (!title || !body) {
+    return res.status(400).json({ message: 'Title and body are required' });
+  }
+
   const note = {
     id: uuidv4(),
     userId: req.user.id,
     title,
     body,
-    tags: tags || [],
+    tags: Array.isArray(tags) ? tags : (tags ? [tags] : []),
     created: now,
     lastModified: now
   };
 
   notes.push(note);
+  saveNotes().catch(console.error);
+
   res.status(201).json(note);
 });
 
 app.put('/api/notes/:id', authenticateToken, (req, res) => {
   const noteIndex = notes.findIndex(
-    n => n.id === req.params.id && n.userId === req.user.id
+      n => n.id === req.params.id && n.userId === req.user.id
   );
 
   if (noteIndex === -1) {
@@ -192,18 +252,31 @@ app.put('/api/notes/:id', authenticateToken, (req, res) => {
   const note = notes[noteIndex];
   const { title, body, tags } = req.body;
 
-  if (title !== undefined) note.title = title;
-  if (body !== undefined) note.body = body;
-  if (tags !== undefined) note.tags = tags;
-  note.lastModified = new Date();
+  if (title !== undefined) {
+    if (!title) return res.status(400).json({ message: 'Title cannot be empty' });
+    note.title = title;
+  }
 
+  if (body !== undefined) {
+    if (!body) return res.status(400).json({ message: 'Body cannot be empty' });
+    note.body = body;
+  }
+
+  if (tags !== undefined) {
+    note.tags = Array.isArray(tags) ? tags : (tags ? [tags] : []);
+  }
+
+  note.lastModified = new Date();
   notes[noteIndex] = note;
+
+  saveNotes().catch(console.error);
+
   res.json(note);
 });
 
 app.delete('/api/notes/:id', authenticateToken, (req, res) => {
   const noteIndex = notes.findIndex(
-    n => n.id === req.params.id && n.userId === req.user.id
+      n => n.id === req.params.id && n.userId === req.user.id
   );
 
   if (noteIndex === -1) {
@@ -211,10 +284,12 @@ app.delete('/api/notes/:id', authenticateToken, (req, res) => {
   }
 
   notes.splice(noteIndex, 1);
+  saveNotes().catch(console.error);
+
   res.sendStatus(204);
 });
 
-// Export Routes
+// -------------------- Export Routes --------------------
 app.post('/api/export', authenticateToken, (req, res) => {
   const { format } = req.body;
   const jobId = uuidv4();
@@ -256,81 +331,68 @@ app.get('/api/export/:id', authenticateToken, (req, res) => {
     return res.status(400).json({ message: 'Export not completed' });
   }
 
-  // Generate export file
   const userNotes = notes.filter(n => n.userId === req.user.id);
-  let filename, contentType;
 
   if (job.format === 'json') {
     const content = JSON.stringify(userNotes, null, 2);
-    filename = 'notes-export.json';
-    contentType = 'application/json';
+    const filename = 'notes-export.json';
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Type', contentType);
-    res.send(content);
-  } else {
-    // Generate PDF using pdfkit
-    filename = 'notes-export.pdf';
-    contentType = 'application/pdf';
-    
-    try {
-      const doc = new PDFDocument({
-        margins: { top: 50, bottom: 50, left: 50, right: 50 }
-      });
-      
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Content-Type', contentType);
-      
-      // Pipe PDF to response
-      doc.pipe(res);
-      
-      // Add title
-      doc.fontSize(20).font('Helvetica-Bold').text('NoteFlow Export', { align: 'center' });
-      doc.moveDown();
-      doc.fontSize(12).font('Helvetica').text(`Exported on: ${new Date().toLocaleString()}`, { align: 'center' });
-      doc.fontSize(10).text(`Total Notes: ${userNotes.length}`, { align: 'center' });
-      doc.moveDown(2);
-      
-      // Add each note
-      if (userNotes.length === 0) {
-        doc.fontSize(14).text('No notes to export.', { align: 'center' });
-      } else {
-        userNotes.forEach((note, index) => {
-          if (index > 0) {
-            doc.addPage();
-          }
-          
-          // Note title
-          doc.fontSize(16).font('Helvetica-Bold').text(note.title || 'Untitled Note', { underline: true });
-          doc.moveDown(0.5);
-          
-          // Note body - handle long text with proper wrapping
-          const bodyText = note.body || '(No content)';
-          doc.fontSize(12).font('Helvetica').text(bodyText, {
-            align: 'left',
-            width: doc.page.width - 100
-          });
-          doc.moveDown();
-          
-          // Tags
-          if (note.tags && note.tags.length > 0) {
-            doc.fontSize(10).font('Helvetica-Oblique').text(`Tags: ${note.tags.join(', ')}`, { color: 'gray' });
-            doc.moveDown();
-          }
-          
-          // Dates
-          const createdDate = note.created ? new Date(note.created).toLocaleString() : 'Unknown';
-          const modifiedDate = note.lastModified ? new Date(note.lastModified).toLocaleString() : 'Unknown';
-          doc.fontSize(10).font('Helvetica').text(`Created: ${createdDate}`, { color: 'gray' });
-          doc.text(`Modified: ${modifiedDate}`, { color: 'gray' });
+    res.setHeader('Content-Type', 'application/json');
+    return res.send(content);
+  }
+
+  // PDF export via pdfkit
+  const filename = 'notes-export.pdf';
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Type', 'application/pdf');
+
+  try {
+    const doc = new PDFDocument({
+      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    });
+
+    doc.pipe(res);
+
+    doc.fontSize(20).font('Helvetica-Bold').text('NoteFlow Export', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).font('Helvetica').text(`Exported on: ${new Date().toLocaleString()}`, { align: 'center' });
+    doc.fontSize(10).text(`Total Notes: ${userNotes.length}`, { align: 'center' });
+    doc.moveDown(2);
+
+    if (userNotes.length === 0) {
+      doc.fontSize(14).text('No notes to export.', { align: 'center' });
+    } else {
+      userNotes.forEach((note, index) => {
+        if (index > 0) doc.addPage();
+
+        doc.fontSize(16).font('Helvetica-Bold')
+            .text(note.title || 'Untitled Note', { underline: true });
+        doc.moveDown(0.5);
+
+        const bodyText = note.body || '(No content)';
+        doc.fontSize(12).font('Helvetica').text(bodyText, {
+          align: 'left',
+          width: doc.page.width - 100
         });
-      }
-      
-      // Finalize PDF
-      doc.end();
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      res.status(500).json({ message: 'Error generating PDF file' });
+        doc.moveDown();
+
+        if (note.tags && note.tags.length > 0) {
+          doc.fontSize(10).font('Helvetica-Oblique')
+              .text(`Tags: ${note.tags.join(', ')}`);
+          doc.moveDown();
+        }
+
+        const createdDate = note.created ? new Date(note.created).toLocaleString() : 'Unknown';
+        const modifiedDate = note.lastModified ? new Date(note.lastModified).toLocaleString() : 'Unknown';
+        doc.fontSize(10).font('Helvetica').text(`Created: ${createdDate}`);
+        doc.text(`Modified: ${modifiedDate}`);
+      });
     }
+
+    doc.end();
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    res.status(500).json({ message: 'Error generating PDF file' });
   }
 });
 
@@ -341,7 +403,6 @@ function processExport(jobId) {
   job.status = 'processing';
   job.progress = 10;
 
-  // Simulate progress updates
   const interval = setInterval(() => {
     job.progress += 10;
     if (job.progress >= 100) {
@@ -352,18 +413,20 @@ function processExport(jobId) {
   }, 200);
 }
 
-// Import Routes
+// -------------------- Import Routes --------------------
 app.post('/api/import', authenticateToken, upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
 
+  const uploadedPath = req.file.path;
+
   try {
-    const fileContent = await fs.readFile(req.file.path, 'utf8');
+    const fileContent = await fs.readFile(uploadedPath, 'utf8');
     const importedNotes = JSON.parse(fileContent);
 
     if (!Array.isArray(importedNotes)) {
-      return res.status(400).json({ message: 'Invalid file format' });
+      return res.status(400).json({ message: 'Invalid file format: expected an array of notes' });
     }
 
     let created = 0;
@@ -371,9 +434,9 @@ app.post('/api/import', authenticateToken, upload.single('file'), async (req, re
     const errors = [];
 
     importedNotes.forEach((note, index) => {
-      if (!note.title || !note.body) {
+      if (!note || !note.title || !note.body) {
         rejected++;
-        errors.push(`Note at index ${index}: Missing required fields`);
+        errors.push(`Note at index ${index}: Missing required fields (title/body)`);
         return;
       }
 
@@ -382,7 +445,7 @@ app.post('/api/import', authenticateToken, upload.single('file'), async (req, re
         userId: req.user.id,
         title: note.title,
         body: note.body,
-        tags: note.tags || [],
+        tags: Array.isArray(note.tags) ? note.tags : (note.tags ? [note.tags] : []),
         created: new Date(),
         lastModified: new Date()
       };
@@ -391,8 +454,7 @@ app.post('/api/import', authenticateToken, upload.single('file'), async (req, re
       created++;
     });
 
-    // Clean up uploaded file
-    await fs.unlink(req.file.path);
+    await saveNotes();
 
     res.json({
       created,
@@ -401,6 +463,9 @@ app.post('/api/import', authenticateToken, upload.single('file'), async (req, re
     });
   } catch (error) {
     res.status(400).json({ message: 'Invalid JSON file', error: error.message });
+  } finally {
+    // Always clean up uploaded file
+    try { await fs.unlink(uploadedPath); } catch { /* ignore */ }
   }
 });
 

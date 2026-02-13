@@ -1,0 +1,56 @@
+[
+  {
+    "id": "c1a1d8f5-76f5-4ba4-8d15-0fc744619b34",
+    "userId": "623c8a27-e60a-4f4a-aced-7ba20e6e5c7f",
+    "title": "hhh",
+    "body": "iecninsd",
+    "tags": [
+      "work"
+    ],
+    "created": "2026-02-13T17:16:11.713Z",
+    "lastModified": "2026-02-13T17:16:25.057Z"
+  },
+  {
+    "id": "e3e7f4ca-8273-4f44-9b81-755e8aeaa8ad",
+    "userId": "1",
+    "title": "Thought",
+    "body": "Optimize performance later",
+    "tags": [],
+    "created": "2026-02-13T17:19:43.688Z",
+    "lastModified": "2026-02-13T17:19:43.688Z"
+  },
+  {
+    "id": "17b78fae-e3fa-4253-b426-bc9b3ee681a2",
+    "userId": "1",
+    "title": "Plan",
+    "body": "Outline next sprint goals",
+    "tags": [
+      "work",
+      "planning"
+    ],
+    "created": "2026-02-13T17:19:43.688Z",
+    "lastModified": "2026-02-13T17:19:43.688Z"
+  },
+  {
+    "id": "fb83ab84-e5e7-4af5-a21a-e7417ce5c81b",
+    "userId": "1",
+    "title": "Snippet",
+    "body": "Save useful code example",
+    "tags": [
+      "dev"
+    ],
+    "created": "2026-02-13T17:19:43.688Z",
+    "lastModified": "2026-02-13T17:19:43.688Z"
+  },
+  {
+    "id": "4375759b-8192-4e0c-a2d0-5d2f55f0b135",
+    "userId": "1",
+    "title": "Log",
+    "body": "Testing note creation flow",
+    "tags": [
+      "test"
+    ],
+    "created": "2026-02-13T17:19:43.688Z",
+    "lastModified": "2026-02-13T17:19:43.688Z"
+  }
+]
