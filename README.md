@@ -197,6 +197,16 @@ This project fulfills all requirements from the course:
 - ✅ Settings component
 - ✅ Logout functionality
 
+## Deployment
+
+For information about deploying this project online, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+Quick recommendations:
+- **Frontend**: Vercel or Netlify (Free tiers available)
+- **Backend**: Render or Railway (Free tiers available)
+- **Database**: MongoDB Atlas (Free tier) - Replace in-memory storage
+- **Domain**: Namecheap or Cloudflare ($10-15/year)
+
 ## License
 
 This project is created for educational purposes.
