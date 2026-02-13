@@ -24,7 +24,7 @@ describe('NotesService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should get notes', () => {
+  it('should get notes (no query params)', () => {
     const mockNotes: Note[] = [
       {
         id: '1',
@@ -40,9 +40,56 @@ describe('NotesService', () => {
       expect(notes).toEqual(mockNotes);
     });
 
-    const req = httpMock.expectOne('http://localhost:3000/api/notes');
+    const req = httpMock.expectOne(r => r.url === 'http://localhost:3000/api/notes');
     expect(req.request.method).toBe('GET');
+    // no params set
+    expect(req.request.params.keys().length).toBe(0);
+
     req.flush(mockNotes);
+  });
+
+  // ✅ covers: if (search) branch true
+  it('should get notes with search param', () => {
+    service.getNotes('hello').subscribe();
+
+    const req = httpMock.expectOne(r => r.url === 'http://localhost:3000/api/notes');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('search')).toBe('hello');
+
+    req.flush([]);
+  });
+
+  // ✅ covers: if (tags && tags.length > 0) branch true
+  it('should get notes with tags param', () => {
+    service.getNotes(undefined, ['tag1', 'tag2']).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === 'http://localhost:3000/api/notes');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('tags')).toBe('tag1,tag2');
+
+    req.flush([]);
+  });
+
+  // ✅ covers: if (sortBy) branch true
+  it('should get notes with sortBy param', () => {
+    service.getNotes(undefined, undefined, 'title').subscribe();
+
+    const req = httpMock.expectOne(r => r.url === 'http://localhost:3000/api/notes');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('sortBy')).toBe('title');
+
+    req.flush([]);
+  });
+
+  // ✅ extra: covers tags branch false when tags provided but empty (helps branch counting)
+  it('should NOT set tags param when tags array is empty', () => {
+    service.getNotes(undefined, []).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === 'http://localhost:3000/api/notes');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.has('tags')).toBeFalse();
+
+    req.flush([]);
   });
 
   it('should get note by id', () => {

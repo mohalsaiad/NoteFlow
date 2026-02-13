@@ -1,44 +1,47 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { authGuard } from './auth.guard';
+import { Router, provideRouter } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { authGuard } from './auth.guard';
 
-describe('AuthGuard', () => {
-  let guard: typeof authGuard;
-  let authService: jasmine.SpyObj<AuthService>;
-  let router: jasmine.SpyObj<Router>;
+describe('authGuard', () => {
+  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let router: Router;
 
   beforeEach(() => {
-    const authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated']);
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', [
+      'isAuthenticated'
+    ]);
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: AuthService, useValue: authServiceSpy },
-        { provide: Router, useValue: routerSpy }
+        provideRouter([]), // Provides Router correctly
+        { provide: AuthService, useValue: authServiceSpy }
       ]
     });
 
-    guard = authGuard;
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
-    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
   });
 
   it('should allow access when authenticated', () => {
-    authService.isAuthenticated.and.returnValue(true);
-    
-    const result = guard({} as any, {} as any);
-    
-    expect(result).toBe(true);
+    authServiceSpy.isAuthenticated.and.returnValue(true);
+
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as any, {} as any)
+    );
+
+    expect(result).toBeTrue();
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('should redirect to login when not authenticated', () => {
-    authService.isAuthenticated.and.returnValue(false);
-    
-    const result = guard({} as any, {} as any);
-    
-    expect(result).toBe(false);
+    authServiceSpy.isAuthenticated.and.returnValue(false);
+
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as any, {} as any)
+    );
+
+    expect(result).toBeFalse();
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 });
