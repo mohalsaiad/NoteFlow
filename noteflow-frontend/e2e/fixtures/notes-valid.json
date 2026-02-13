@@ -1,0 +1,4 @@
+[
+  { "title": "Imported 1", "body": "Hello" },
+  { "title": "Imported 2", "body": "World", "tags": ["tagA"] }
+]
