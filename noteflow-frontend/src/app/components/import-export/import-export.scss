@@ -1,11 +1,22 @@
 .import-export-container {
   padding: 2rem;
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 2rem;
 
   h1 {
-    margin-bottom: 2rem;
-    color: #333;
+    margin: 0;
+    font-size: 2rem;
+    color: #2c2c2c;
+  }
+
+  .subtitle {
+    margin: 0.4rem 0 0 0;
+    color: #777;
+    font-size: 0.95rem;
   }
 }
 
@@ -22,115 +33,205 @@
 .section {
   background: white;
   padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border: 1px solid #ececf3;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
 
-  h2 {
-    margin-top: 0;
-    color: #333;
+  .section-header {
+    margin-bottom: 1.5rem;
+
+    h2 {
+      margin: 0;
+      color: #333;
+      font-size: 1.3rem;
+    }
+
+    p {
+      margin: 0.35rem 0 0 0;
+      color: #777;
+      font-size: 0.9rem;
+    }
   }
 }
 
-.format-selection, .file-input {
+.format-selection,
+.file-input {
   margin-bottom: 1.5rem;
 
   label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
+    color: #555;
+    font-size: 0.9rem;
   }
 
-  select, input[type="file"] {
+  select,
+  input[type="file"] {
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.85rem;
     border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+    background: #fff;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+    }
   }
 }
 
-.export-button, .import-button {
+.export-button,
+.import-button {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.85rem 1rem;
   background: #667eea;
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.25s ease;
 
   &:hover:not(:disabled) {
     background: #5568d3;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
   }
 
   &:disabled {
-    background: #ccc;
+    background: #c9c9d4;
     cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
   }
 }
 
 .progress-section {
   margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fc;
+  border: 1px solid #ececf3;
+  border-radius: 10px;
 
-  .progress-bar {
-    width: 100%;
-    height: 20px;
-    background: #f0f0f0;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 0.5rem;
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.65rem;
+    font-size: 0.9rem;
+    color: #555;
 
-    .progress-fill {
-      height: 100%;
-      background: #667eea;
-      transition: width 0.3s;
+    .progress-value {
+      font-weight: 600;
+      color: #333;
     }
   }
 
-  .progress-text {
-    text-align: center;
-    font-weight: 500;
-    margin: 0.5rem 0;
+  .progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #e8eaf3;
+    border-radius: 999px;
+    overflow: hidden;
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #7f8ff4);
+      transition: width 0.3s ease;
+    }
   }
 
   .status-text {
     text-align: center;
     color: #666;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
+    margin: 0.8rem 0 0 0;
+    text-transform: capitalize;
   }
 }
 
 .success-message {
   margin-top: 1rem;
   padding: 1rem;
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  border-radius: 4px;
-  color: #155724;
+  background: #edf8f0;
+  border: 1px solid #cfe8d5;
+  border-radius: 8px;
+  color: #1d6b3a;
+  font-size: 0.9rem;
 }
 
 .import-result {
   margin-top: 1.5rem;
-  padding: 1rem;
-  background: #f5f5f5;
-  border-radius: 4px;
+  padding: 1.25rem;
+  background: #f8f9fc;
+  border: 1px solid #ececf3;
+  border-radius: 10px;
 
   h3 {
-    margin-top: 0;
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 1.1rem;
+  }
+
+  .result-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .stat-box {
+      flex: 1;
+      min-width: 140px;
+      padding: 1rem;
+      background: white;
+      border: 1px solid #e7e9f2;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+
+      .stat-label {
+        font-size: 0.8rem;
+        color: #777;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .stat-value {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #333;
+      }
+
+      &.rejected .stat-value {
+        color: #d9534f;
+      }
+    }
   }
 
   .errors {
-    margin-top: 1rem;
+    margin-top: 1.25rem;
 
     h4 {
-      color: #e74c3c;
+      margin: 0 0 0.5rem 0;
+      color: #d9534f;
+      font-size: 0.95rem;
     }
 
     ul {
-      margin: 0.5rem 0;
-      padding-left: 1.5rem;
-      color: #e74c3c;
+      margin: 0;
+      padding-left: 1.2rem;
+      color: #d9534f;
+
+      li {
+        margin-bottom: 0.35rem;
+        font-size: 0.9rem;
+      }
     }
   }
 }
