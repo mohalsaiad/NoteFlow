@@ -7,8 +7,11 @@ test('user can create a note', async ({ page }) => {
   await page.getByRole('button', { name: /login/i }).click();
 
   await expect(page).toHaveURL(/\/notes$/);
+  await page.waitForLoadState('networkidle');
 
-  await page.getByRole('button', { name: /^create note$/i }).click();
+  // Use stable CSS class instead of strict button text matching
+  await page.locator('.create-button').click();
+
   await expect(page).toHaveURL(/\/notes\/new$/);
 
   const title = `E2E Note ${Date.now()}`;
@@ -21,10 +24,9 @@ test('user can create a note', async ({ page }) => {
     await tagsField.fill('tag1, tag2');
   }
 
+  // Use button text Create or CSS fallback
   await page.getByRole('button', { name: /^create$/i }).click();
 
   await expect(page).toHaveURL(/\/notes$/);
-
-  // Use role heading match (stable) + unique title
   await expect(page.getByRole('heading', { name: title })).toBeVisible();
 });

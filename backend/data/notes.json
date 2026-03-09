@@ -141,5 +141,57 @@
     "tags": [],
     "created": "2026-03-09T19:01:51.418Z",
     "lastModified": "2026-03-09T19:01:51.418Z"
+  },
+  {
+    "id": "39b92918-0822-41c2-8e8f-c09252e538c2",
+    "userId": "1",
+    "title": "Imported 1",
+    "body": "Hello",
+    "tags": [],
+    "created": "2026-03-09T23:39:49.428Z",
+    "lastModified": "2026-03-09T23:39:49.428Z"
+  },
+  {
+    "id": "c9df8813-916e-4fc2-9350-231c55a811dc",
+    "userId": "1",
+    "title": "Imported 2",
+    "body": "World",
+    "tags": [
+      "tagA"
+    ],
+    "created": "2026-03-09T23:39:49.428Z",
+    "lastModified": "2026-03-09T23:39:49.428Z"
+  },
+  {
+    "id": "2b34f6fa-dcee-48e5-8f9a-a591ce512275",
+    "userId": "1",
+    "title": "Imported 1",
+    "body": "Hello",
+    "tags": [],
+    "created": "2026-03-09T23:42:51.892Z",
+    "lastModified": "2026-03-09T23:42:51.892Z"
+  },
+  {
+    "id": "5b00dd5e-93ee-4b50-844c-c12e8615857c",
+    "userId": "1",
+    "title": "Imported 2",
+    "body": "World",
+    "tags": [
+      "tagA"
+    ],
+    "created": "2026-03-09T23:42:51.892Z",
+    "lastModified": "2026-03-09T23:42:51.892Z"
+  },
+  {
+    "id": "c334b9c8-e8bd-4c8e-86d5-2dd83a038f29",
+    "userId": "1",
+    "title": "E2E Note 1773099771743",
+    "body": "Created by Playwright.",
+    "tags": [
+      "tag1",
+      "tag2"
+    ],
+    "created": "2026-03-09T23:42:51.942Z",
+    "lastModified": "2026-03-09T23:42:51.942Z"
   }
 ]
